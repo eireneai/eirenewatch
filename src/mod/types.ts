@@ -1,8 +1,6 @@
 import {
   type ActiveTask,
   type Debounce,
-  type Expression,
-  type FileChangeEvent,
   type TeardownEvent,
   type Throttle,
   type WatcherConstructable,
@@ -24,7 +22,9 @@ export type ChangeEvent<T> = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type OnChangeEventHandler<T> = (event: ChangeEvent<T>) => Promise<any>;
+type OnChangeEventHandler<T> = (
+  event: ChangeEvent<T>
+) => Promise<any>;
 
 type OnTeardownEventHandler = (event: TeardownEvent) => Promise<void>;
 
@@ -72,10 +72,10 @@ export type EirenewatchConfigurationInput<T> = {
   readonly Watcher?: WatcherConstructable;
   readonly abortController?: AbortController;
   readonly configPath: string;
-  readonly parseConfig: (data: string) => T;
+  readonly parseConfig: (raw: string) => T;
+  readonly onBeforeEmit?: (config: T) => Promise<void>;
+  readonly onAfterEmit?: (config: T) => Promise<void>;
   readonly cwd?: string;
   readonly debounce?: Debounce;
-  readonly expression: Expression;
   readonly processes: readonly ProcessTemplateInput<T>[];
-  readonly project: string;
 };

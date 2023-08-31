@@ -23,11 +23,12 @@ export const watch = <T>(
   const {
     abortController,
     cwd,
-    project,
     processes,
     debounce: userDebounce,
     parseConfig,
     configPath,
+    onAfterEmit = () => Promise.resolve(undefined),
+    onBeforeEmit = () => Promise.resolve(undefined),
     Watcher,
   }: EirenewatchConfigurationInput<T> = {
     abortController: new AbortController(),
@@ -165,7 +166,7 @@ export const watch = <T>(
       }
     });
 
-    watcher.on('ready', () => {
+    watcher.on('ready', async () => {
       ready = true;
 
       if (!terminating) {
@@ -174,11 +175,13 @@ export const watch = <T>(
         try {
           const rawConfig = fs.readFileSync(configPath, 'utf-8');
           const config = parseConfig(rawConfig);
+          await onBeforeEmit(config);
           for (const subscription of subscriptions) {
             if (subscription.initialRun) {
               void subscription.trigger(config);
             }
           }
+          await onAfterEmit(config);
         } catch (err) {
           log.error(
             {
