@@ -84,7 +84,7 @@ const main = async <T>() => {
     watch: (
       configurationInput: EirenewatchConfigurationInput<T>
     ) => Promise<TurbowatchController>;
-  } = jiti(__filename)('../watch');
+  } = jiti(__filename)('../mod/watch');
 
   const argv = await yargs(hideBin(process.argv))
     .command(
