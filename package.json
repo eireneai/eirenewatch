@@ -52,7 +52,7 @@
   ],
   "license": "BSD-3-Clause",
   "main": "./dist/index.js",
-  "name": "turbowatch",
+  "name": "eirenewatch",
   "repository": {
     "type": "git",
     "url": "https://github.com/gajus/turbowatch"
