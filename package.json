@@ -55,7 +55,7 @@
   "name": "eirenewatch",
   "repository": {
     "type": "git",
-    "url": "https://github.com/gajus/turbowatch"
+    "url": "https://github.com/eireneai/turbowatch"
   },
   "scripts": {
     "build": "rm -fr ./dist && tsc --project tsconfig.build.json",
