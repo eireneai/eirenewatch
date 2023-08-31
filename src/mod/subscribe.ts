@@ -1,12 +1,7 @@
 import { createSpawn } from '../createSpawn';
 import { generateShortId } from '../generateShortId';
 import { Logger } from '../Logger';
-import {
-  Expression,
-  type ActiveTask,
-  type FileChangeEvent,
-  type Trigger,
-} from '../types';
+import { type ActiveTask } from '../types';
 import { setTimeout } from 'node:timers/promises';
 import { serializeError } from 'serialize-error';
 import { ProcessTemplate, Subscription } from './types';
@@ -32,13 +27,13 @@ export function makeSubscribe<T>() {
   };
 
   const runTask = async ({
-    data,
+    config,
     template,
     taskId,
     abortController,
     firstEvent,
   }: {
-    data: T;
+    config: T;
     template: ProcessTemplate<T>;
     abortController: AbortController;
     firstEvent: boolean;
@@ -77,7 +72,7 @@ export function makeSubscribe<T>() {
         await template.onChange({
           abortSignal: abortController?.signal,
           attempt: failedAttempts,
-          data,
+          config,
           first: firstEvent,
           log,
           spawn: createSpawn(taskId, {
@@ -168,9 +163,7 @@ export function makeSubscribe<T>() {
     );
   };
 
-  return (
-    template: ProcessTemplate<T>
-  ): Subscription<T> => {
+  return (template: ProcessTemplate<T>): Subscription<T> => {
     /**
      * Indicates that the teardown process has been initiated.
      * This is used to prevent the trigger from being triggered again while the teardown process is running.
@@ -192,7 +185,7 @@ export function makeSubscribe<T>() {
      */
     let outerChangedFiles: string[] = [];
 
-    const handleSubscriptionEvent = async (data: T) => {
+    const handleSubscriptionEvent = async (config: T) => {
       let firstEvent = outerFirstEvent;
 
       if (outerFirstEvent) {
@@ -276,7 +269,7 @@ export function makeSubscribe<T>() {
 
       const taskPromise = runTask({
         abortController,
-        data,
+        config,
         firstEvent,
         taskId,
         template,

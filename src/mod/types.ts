@@ -11,7 +11,7 @@ import { type ProcessOutput } from 'zx';
 export type ChangeEvent<T> = {
   abortSignal?: AbortSignal;
   attempt: number;
-  data: T;
+  config: T;
   first: boolean;
   log: Logger;
   spawn: (
