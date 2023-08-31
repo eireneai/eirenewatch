@@ -4,10 +4,8 @@
 /* eslint-disable require-atomic-updates */
 
 import { Logger } from '../Logger';
-import {
-  type TurbowatchConfigurationInput,
-  type TurbowatchController,
-} from '../types';
+import { type EirenewatchConfigurationInput } from '../mod/types';
+import { type TurbowatchController } from '../types';
 import { glob } from 'glob';
 import jiti from 'jiti';
 import { existsSync } from 'node:fs';
@@ -16,18 +14,18 @@ import { hideBin } from 'yargs/helpers';
 import yargs from 'yargs/yargs';
 
 const log = Logger.child({
-  namespace: 'turbowatch',
+  namespace: 'eirenewatch',
 });
 
 // eslint-disable-next-line node/no-process-env
 if (process.env.ROARR_LOG !== 'true') {
   // eslint-disable-next-line no-console
   console.warn(
-    '[turbowatch] running turbowatch without logging enabled; set ROARR_LOG=true to enable logging. Install @roarr/cli to pretty-print logs.',
+    '[eirenewatch] running eirenewatch without logging enabled; set ROARR_LOG=true to enable logging. Install @roarr/cli to pretty-print logs.'
   );
 }
 
-const findTurbowatchScript = (inputPath: string): string | null => {
+const findeirenewatchScript = (inputPath: string): string | null => {
   let resolvedPath: string | null = null;
 
   const providedPath = path.resolve(process.cwd(), inputPath);
@@ -47,7 +45,7 @@ const findTurbowatchScript = (inputPath: string): string | null => {
   return resolvedPath;
 };
 
-const main = async () => {
+const main = async <T>() => {
   const abortController = new AbortController();
 
   let terminating = false;
@@ -84,20 +82,24 @@ const main = async () => {
     watch,
   }: {
     watch: (
-      configurationInput: TurbowatchConfigurationInput,
+      configurationInput: EirenewatchConfigurationInput<T>
     ) => Promise<TurbowatchController>;
   } = jiti(__filename)('../watch');
 
   const argv = await yargs(hideBin(process.argv))
-    .command('$0 [patterns...]', 'Start Turbowatch', (commandYargs) => {
-      commandYargs.positional('patterns', {
-        array: true,
-        default: ['turbowatch.ts'],
-        describe:
-          'Script with Turbowatch instructions. Can provide multiple. It can also be a glob pattern, e.g. **/turbowatch.ts',
-        type: 'string',
-      });
-    })
+    .command(
+      '$0 [patterns...]',
+      'Start eirenewatch',
+      (commandYargs) => {
+        commandYargs.positional('patterns', {
+          array: true,
+          default: ['eirenewatch.ts'],
+          describe:
+            'Script with eirenewatch instructions. Can provide multiple. It can also be a glob pattern, e.g. **/eirenewatch.ts',
+          type: 'string',
+        });
+      }
+    )
     .parse();
 
   const patterns = argv.patterns as readonly string[];
@@ -115,7 +117,7 @@ const main = async () => {
   const resolvedScriptPaths: string[] = [];
 
   for (const scriptPath of scriptPaths) {
-    const resolvedPath = findTurbowatchScript(scriptPath);
+    const resolvedPath = findeirenewatchScript(scriptPath);
 
     if (!resolvedPath) {
       log.error('%s not found', scriptPath);
@@ -129,12 +131,12 @@ const main = async () => {
   }
 
   for (const resolvedPath of resolvedScriptPaths) {
-    const turbowatchConfiguration = jiti(__filename)(resolvedPath)
-      .default as TurbowatchConfigurationInput;
+    const eirenewatchConfiguration = jiti(__filename)(resolvedPath)
+      .default as EirenewatchConfigurationInput<T>;
 
-    if (typeof turbowatchConfiguration?.Watcher !== 'function') {
+    if (typeof eirenewatchConfiguration?.Watcher !== 'function') {
       log.error(
-        'Expected user script to export an instance of TurbowatchController',
+        'Expected user script to export an instance of eirenewatchController'
       );
 
       process.exitCode = 1;
@@ -145,7 +147,7 @@ const main = async () => {
     await watch({
       abortController,
       cwd: path.dirname(resolvedPath),
-      ...turbowatchConfiguration,
+      ...eirenewatchConfiguration,
     });
   }
 };

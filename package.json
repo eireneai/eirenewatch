@@ -5,7 +5,7 @@
     "url": "http://gajus.com"
   },
   "bin": {
-    "turbowatch": "./dist/bin/turbowatch.js"
+    "eirenewatch": "./dist/bin/eirenewatch.js"
   },
   "dependencies": {
     "chalk": "^4.1.2",
