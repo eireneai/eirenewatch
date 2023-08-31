@@ -17,7 +17,7 @@ const log = Logger.child({
   namespace: 'watch',
 });
 
-export const eireneWatch = <T>(
+export const watch = <T>(
   input: EirenewatchConfigurationInput<T>
 ): Promise<TurbowatchController> => {
   const {
