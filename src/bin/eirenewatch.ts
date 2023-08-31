@@ -25,7 +25,7 @@ if (process.env.ROARR_LOG !== 'true') {
   );
 }
 
-const findeirenewatchScript = (inputPath: string): string | null => {
+const findEirenewatchScript = (inputPath: string): string | null => {
   let resolvedPath: string | null = null;
 
   const providedPath = path.resolve(process.cwd(), inputPath);
@@ -117,7 +117,7 @@ const main = async <T>() => {
   const resolvedScriptPaths: string[] = [];
 
   for (const scriptPath of scriptPaths) {
-    const resolvedPath = findeirenewatchScript(scriptPath);
+    const resolvedPath = findEirenewatchScript(scriptPath);
 
     if (!resolvedPath) {
       log.error('%s not found', scriptPath);

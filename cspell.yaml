@@ -18,6 +18,7 @@ words:
   - SIGTERM
   - turborepo
   - turbowatch
+  - eirenewatch
   - vitest
   - wholename
   - pidtree
