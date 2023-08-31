@@ -1,5 +1,4 @@
 import { TurboWatcher } from '../backends/TurboWatcher';
-import { createFileChangeQueue } from '../createFileChangeQueue';
 import { generateShortId } from '../generateShortId';
 import { Logger } from '../Logger';
 import type { JsonObject, TurbowatchController } from '../types';
@@ -28,7 +27,6 @@ export const watch = <T>(
     parseConfig,
     configPath,
     onAfterEmit = () => Promise.resolve(undefined),
-    onBeforeEmit = () => Promise.resolve(undefined),
     Watcher,
   }: EirenewatchConfigurationInput<T> = {
     abortController: new AbortController(),
@@ -175,7 +173,6 @@ export const watch = <T>(
         try {
           const rawConfig = fs.readFileSync(configPath, 'utf-8');
           const config = parseConfig(rawConfig);
-          await onBeforeEmit(config);
           for (const subscription of subscriptions) {
             if (subscription.initialRun) {
               void subscription.trigger(config);

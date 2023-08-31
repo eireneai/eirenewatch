@@ -73,7 +73,6 @@ export type EirenewatchConfigurationInput<T> = {
   readonly abortController?: AbortController;
   readonly configPath: string;
   readonly parseConfig: (raw: string) => T;
-  readonly onBeforeEmit?: (config: T) => Promise<void>;
   readonly onAfterEmit?: (config: T) => Promise<void>;
   readonly cwd?: string;
   readonly debounce?: Debounce;
