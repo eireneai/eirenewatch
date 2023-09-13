@@ -21,14 +21,15 @@ export type ChangeEvent<T> = {
   taskId: string;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type OnChangeEventHandler<T> = (
-  event: ChangeEvent<T>
-) => Promise<any>;
+export interface OnChangeEventHandler<T> {
+  (event: ChangeEvent<T>): Promise<unknown>;
+}
 
-type OnTeardownEventHandler = (event: TeardownEvent) => Promise<void>;
+export interface OnTeardownEventHandler {
+  (event: TeardownEvent): Promise<void>;
+}
 
-type Retry = {
+export type Retry = {
   factor?: number;
   maxTimeout?: number;
   minTimeout?: number;
