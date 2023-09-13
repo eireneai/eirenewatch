@@ -16,6 +16,7 @@ export interface SpawnType {
 }
 
 export type TaskContext<Config, Data> = {
+  entryId: string;
   abortSignal?: AbortSignal;
   attempt: number;
   config: Config;

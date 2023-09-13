@@ -26,6 +26,7 @@ const createAbortController = (process: TaskTemplate<any, any>) => {
 };
 
 const runTask = async <Config, Data>({
+  entryId,
   config,
   data,
   template,
@@ -33,6 +34,7 @@ const runTask = async <Config, Data>({
   abortController,
   firstEvent,
 }: {
+  entryId: string;
   config: Config;
   data: Data;
   template: TaskTemplate<Config, Data>;
@@ -71,6 +73,7 @@ const runTask = async <Config, Data>({
 
     try {
       await template.launch({
+        entryId,
         abortSignal: abortController?.signal,
         attempt: failedAttempts,
         config,
@@ -166,7 +169,8 @@ const runTask = async <Config, Data>({
 };
 
 export function TaskManager<Config, Data>(
-  template: TaskTemplate<Config, Data>
+  template: TaskTemplate<Config, Data>,
+  entryId: string
 ): TaskManager<Config, Data> {
   /**
    * Indicates that the teardown process has been initiated.
@@ -267,6 +271,7 @@ export function TaskManager<Config, Data>(
     const abortController = createAbortController(template);
 
     const taskPromise = runTask({
+      entryId,
       abortController,
       config,
       firstEvent,
@@ -372,7 +377,7 @@ export function ManagerPool<Config, Data>(
           if (manager) {
             await manager.updateConfig(config, data[i]);
           } else {
-            const manager = TaskManager(template);
+            const manager = TaskManager(template, String(i));
             managers.set(i, manager);
             await manager.updateConfig(config, data[i]);
           }
