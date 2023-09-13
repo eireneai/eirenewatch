@@ -17,7 +17,6 @@ const log = Logger.child({
   namespace: 'eirenewatch',
 });
 
-
 // eslint-disable-next-line node/no-process-env
 if (process.env.ROARR_LOG !== 'true') {
   // eslint-disable-next-line no-console
