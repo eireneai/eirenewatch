@@ -338,10 +338,10 @@ export function TaskManager<Config, Data>(
               throttleOutput: template.throttleOutput,
             }),
           });
-        } catch (error) {
+        } catch (err) {
           log.error(
             {
-              error,
+              error: serializeError(err),
             },
             'teardown produced an error'
           );
@@ -383,10 +383,10 @@ export function ManagerPool<Config, Data>(
           }
         }
       }
-    } catch (error) {
+    } catch (err) {
       log.error(
         {
-          error,
+          error: serializeError(err),
         },
         'trigger produced an error'
       );
