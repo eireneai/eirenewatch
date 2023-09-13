@@ -2,33 +2,31 @@ import { TurboWatcher } from '../backends/TurboWatcher';
 import { generateShortId } from '../generateShortId';
 import { Logger } from '../Logger';
 import type { JsonObject, TurbowatchController } from '../types';
-import {
-  type Subscription,
-  type EirenewatchConfigurationInput,
-} from './types';
+import { type EirenewatchConfigurationInput } from './types';
 import { serializeError } from 'serialize-error';
 import { debounce } from 'throttle-debounce';
 import * as fs from 'fs';
 
-import { makeSubscribe } from './subscribe';
+import { ManagerPool } from './manager-pool';
 
 const log = Logger.child({
   namespace: 'watch',
 });
 
-export const watch = <T>(
-  input: EirenewatchConfigurationInput<T>
+export const watch = <Config, Data>(
+  input: EirenewatchConfigurationInput<Config, Data>
 ): Promise<TurbowatchController> => {
   const {
     abortController,
     cwd,
-    processes,
+    task,
     debounce: userDebounce,
     parseConfig,
+    parseProcessData,
     configPath,
     onAfterEmit = () => Promise.resolve(undefined),
     Watcher,
-  }: EirenewatchConfigurationInput<T> = {
+  }: EirenewatchConfigurationInput<Config, Data> = {
     abortController: new AbortController(),
     // as far as I can tell, this is a bug in unicorn/no-unused-properties
     // https://github.com/sindresorhus/eslint-plugin-unicorn/issues/2051
@@ -44,8 +42,31 @@ export const watch = <T>(
 
   const abortSignal = abortController.signal;
 
-  const subscriptions: Subscription<T>[] = [];
-  const subscribe = makeSubscribe<T>();
+  const initialRun = task.initialRun ?? true;
+  const persistent = task.persistent ?? false;
+
+  if (persistent && !initialRun) {
+    throw new Error(
+      'Persistent triggers must have initialRun set to true.'
+    );
+  }
+
+  const managerPool = ManagerPool<Config, Data>({
+    abortSignal,
+    cwd,
+    id: generateShortId(),
+    initialRun,
+    interruptible: task.interruptible ?? true,
+    name: task.name,
+    launch: task.launch,
+    teardown: task.teardown,
+    persistent,
+    retry: {
+      retries: 3,
+      ...task.retry,
+    },
+    throttleOutput: task.throttleOutput ?? { delay: 1_000 },
+  });
 
   const watcher = new Watcher(configPath);
 
@@ -62,21 +83,7 @@ export const watch = <T>(
 
     abortController.abort();
 
-    for (const subscription of subscriptions) {
-      const { activeTask } = subscription;
-
-      if (activeTask?.promise) {
-        await activeTask?.promise;
-      }
-    }
-
-    for (const subscription of subscriptions) {
-      const { teardown } = subscription;
-
-      if (teardown) {
-        await teardown();
-      }
-    }
+    await managerPool.teardown();
   };
 
   if (abortSignal) {
@@ -91,41 +98,11 @@ export const watch = <T>(
     );
   }
 
-  for (const trigger of processes) {
-    const initialRun = trigger.initialRun ?? true;
-    const persistent = trigger.persistent ?? false;
-
-    if (persistent && !initialRun) {
-      throw new Error(
-        'Persistent triggers must have initialRun set to true.'
-      );
-    }
-
-    subscriptions.push(
-      subscribe({
-        abortSignal,
-        cwd,
-        id: generateShortId(),
-        initialRun,
-        interruptible: trigger.interruptible ?? true,
-        name: trigger.name,
-        onChange: trigger.onChange,
-        onTeardown: trigger.onTeardown,
-        persistent,
-        retry: {
-          retries: 3,
-          ...trigger.retry,
-        },
-        throttleOutput: trigger.throttleOutput ?? { delay: 1_000 },
-      })
-    );
-  }
-
   let ready = false;
 
   watcher.on(
     'change',
-    debounce(userDebounce.wait, () => {
+    debounce(userDebounce.wait, async () => {
       if (!ready) {
         log.warn('ignoring change event before ready');
 
@@ -134,9 +111,9 @@ export const watch = <T>(
       try {
         const rawConfig = fs.readFileSync(configPath, 'utf-8');
         const config = parseConfig(rawConfig);
-        for (const subscription of subscriptions) {
-          void subscription.trigger(config);
-        }
+        const data = parseProcessData(config);
+        void managerPool.trigger([config, data]);
+        onAfterEmit(config, data);
       } catch (err) {
         log.error(
           {
@@ -173,12 +150,9 @@ export const watch = <T>(
         try {
           const rawConfig = fs.readFileSync(configPath, 'utf-8');
           const config = parseConfig(rawConfig);
-          for (const subscription of subscriptions) {
-            if (subscription.initialRun) {
-              void subscription.trigger(config);
-            }
-          }
-          await onAfterEmit(config);
+          const data = parseProcessData(config);
+          void managerPool.trigger([config, data]);
+          onAfterEmit(config, data);
         } catch (err) {
           log.error(
             {

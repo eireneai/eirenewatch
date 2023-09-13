@@ -1,9 +1,9 @@
 import { TurboWatcher } from '../backends/TurboWatcher';
 import { type EirenewatchConfigurationInput } from './types';
 
-export const defineConfigWatcher = <T>(
-  configurationInput: EirenewatchConfigurationInput<T>
-): EirenewatchConfigurationInput<T> => {
+export const defineConfigWatcher = <Config, Data>(
+  configurationInput: EirenewatchConfigurationInput<Config, Data>
+): EirenewatchConfigurationInput<Config, Data> => {
   return {
     Watcher: TurboWatcher,
     ...configurationInput,
