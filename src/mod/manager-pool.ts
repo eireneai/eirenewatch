@@ -168,7 +168,7 @@ const runTask = async <Config, Data>({
   );
 };
 
-export function TaskManager<Config, Data>(
+export function makeTaskManager<Config, Data>(
   template: TaskTemplate<Config, Data>,
   entryId: string
 ): TaskManager<Config, Data> {
@@ -377,7 +377,7 @@ export function ManagerPool<Config, Data>(
           if (manager) {
             await manager.updateConfig(config, data[i]);
           } else {
-            const manager = TaskManager(template, String(i));
+            const manager = makeTaskManager(template, String(i));
             managers.set(i, manager);
             await manager.updateConfig(config, data[i]);
           }
