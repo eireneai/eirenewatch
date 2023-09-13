@@ -4,7 +4,7 @@ import { Logger } from '../Logger';
 import { type ActiveTask } from '../types';
 import { setTimeout } from 'node:timers/promises';
 import { serializeError } from 'serialize-error';
-import { TaskTemplate, ManagerPool, TaskManager } from './types';
+import type { TaskTemplate, ManagerPool, TaskManager } from './types';
 
 const log = Logger.child({
   namespace: 'subscribe',
