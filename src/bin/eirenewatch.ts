@@ -45,7 +45,7 @@ const findEirenewatchScript = (inputPath: string): string | null => {
   return resolvedPath;
 };
 
-const main = async <T>() => {
+const main = async <Config, Data>() => {
   const abortController = new AbortController();
 
   let terminating = false;
@@ -82,7 +82,7 @@ const main = async <T>() => {
     watch,
   }: {
     watch: (
-      configurationInput: EirenewatchConfigurationInput<T>
+      configurationInput: EirenewatchConfigurationInput<Config, Data>
     ) => Promise<TurbowatchController>;
   } = jiti(__filename)('../mod/watch');
 
@@ -132,7 +132,7 @@ const main = async <T>() => {
 
   for (const resolvedPath of resolvedScriptPaths) {
     const eirenewatchConfiguration = jiti(__filename)(resolvedPath)
-      .default as EirenewatchConfigurationInput<T>;
+      .default as EirenewatchConfigurationInput<Config, Data>;
 
     if (typeof eirenewatchConfiguration?.Watcher !== 'function') {
       log.error(
