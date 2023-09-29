@@ -1,16 +1,16 @@
-import { TurboWatcher } from '../backends/TurboWatcher';
-import { generateShortId } from '../generateShortId';
-import { Logger } from '../Logger';
-import type { JsonObject, TurbowatchController } from '../types';
-import { type EirenewatchConfigurationInput } from './types';
-import { serializeError } from 'serialize-error';
-import { debounce } from 'throttle-debounce';
-import * as fs from 'fs';
+import { TurboWatcher } from "../backends/TurboWatcher";
+import { generateShortId } from "../generateShortId";
+import { Logger } from "../Logger";
+import type { JsonObject, TurbowatchController } from "../types";
+import { type EirenewatchConfigurationInput } from "./types";
+import { serializeError } from "serialize-error";
+import { debounce } from "throttle-debounce";
+import * as fs from "fs";
 
-import { ManagerPool } from './manager-pool';
+import { ManagerPool } from "./manager-pool";
 
 const log = Logger.child({
-  namespace: 'watch',
+  namespace: "watch",
 });
 
 export const watch = <Config, Data>(
@@ -46,9 +46,7 @@ export const watch = <Config, Data>(
   const persistent = task.persistent ?? false;
 
   if (persistent && !initialRun) {
-    throw new Error(
-      'Persistent triggers must have initialRun set to true.'
-    );
+    throw new Error("Persistent triggers must have initialRun set to true.");
   }
 
   const managerPool = ManagerPool<Config, Data>({
@@ -88,7 +86,7 @@ export const watch = <Config, Data>(
 
   if (abortSignal) {
     abortSignal.addEventListener(
-      'abort',
+      "abort",
       () => {
         shutdown();
       },
@@ -101,32 +99,42 @@ export const watch = <Config, Data>(
   let ready = false;
 
   watcher.on(
-    'change',
+    "change",
     debounce(userDebounce.wait, async () => {
       if (!ready) {
-        log.warn('ignoring change event before ready');
+        log.warn("ignoring change event before ready");
 
         return;
       }
       try {
-        const rawConfig = fs.readFileSync(configPath, 'utf-8');
+        const rawConfig = fs.readFileSync(configPath, "utf-8");
         const config = parseConfig(rawConfig);
         const data = parseProcessData(config);
-        void managerPool.trigger([config, data]);
-        onAfterEmit(config, data);
+        try {
+          void managerPool.trigger([config, data]);
+          onAfterEmit(config, data);
+        } catch (err) {
+          log.error(
+            {
+              error: serializeError(err) as unknown as JsonObject,
+            },
+            "trigger failed"
+          );
+        }
       } catch (err) {
         log.error(
           {
             error: serializeError(err) as unknown as JsonObject,
+            configPath,
           },
-          'could not read config file'
+          "could not read config file"
         );
       }
     })
   );
 
   return new Promise((resolve, reject) => {
-    watcher.on('error', (error) => {
+    watcher.on("error", (error) => {
       log.error(
         {
           error: serializeError(error) as unknown as JsonObject,
@@ -141,28 +149,38 @@ export const watch = <Config, Data>(
       }
     });
 
-    watcher.on('ready', async () => {
+    watcher.on("ready", async () => {
       ready = true;
 
       if (!terminating) {
-        log.info('triggering initial runs');
+        log.info("triggering initial runs");
 
         try {
-          const rawConfig = fs.readFileSync(configPath, 'utf-8');
+          const rawConfig = fs.readFileSync(configPath, "utf-8");
           const config = parseConfig(rawConfig);
           const data = parseProcessData(config);
-          void managerPool.trigger([config, data]);
-          onAfterEmit(config, data);
+          try {
+            void managerPool.trigger([config, data]);
+            onAfterEmit(config, data);
+          } catch (err) {
+            log.error(
+              {
+                error: serializeError(err) as unknown as JsonObject,
+              },
+              "trigger failed"
+            );
+          }
         } catch (err) {
           log.error(
             {
               error: serializeError(err) as unknown as JsonObject,
+              configPath,
             },
-            'could not read config file'
+            "could not read config file"
           );
         }
 
-        log.info('ready for file changes');
+        log.info("ready for file changes");
       }
 
       resolve({
